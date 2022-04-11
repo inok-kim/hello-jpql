@@ -2,6 +2,7 @@ package jpql;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Map;
 
 public class JpaMain {
 
@@ -15,11 +16,64 @@ public class JpaMain {
         try {
             Member member = new Member();
             member.setUsername("member1");
+            member.setAge(10);
             em.persist(member);
 
 //            Member member2 = new Member();
 //            member.setUsername("member2");
 //            em.persist(member2);
+
+            em.flush();
+            em.clear();
+
+            // Tuple
+            List<Tuple> tupleList = em.createQuery("select m.username as username, m.age as age from Member m", Tuple.class).getResultList();
+            for (Tuple tuple : tupleList) {
+                String username = (String) tuple.get(0);
+                int age = (int) tuple.get(1);
+                String usernameByAlias = tuple.get("username", String.class);
+                int ageByAlias = tuple.get("age", Integer.class);
+            }
+
+            // 스칼라 타입 프로젝션
+            List nameAgeObjectList = em.createQuery("select distinct m.username, m.age from Member m").getResultList();
+            for (Object o : nameAgeObjectList) {
+                Object[] item = (Object[]) o;
+                System.out.println(item[0]+","+item[1]);
+                String username = (String) item[0];
+                int age = (int) item[1];
+            }
+
+            List<Object[]> nameAgeObjectArrList = em.createQuery("select distinct m.username, m.age from Member m").getResultList();
+            for (Object[] objects : nameAgeObjectArrList) {
+                System.out.println(objects[0]+","+objects[1]);
+                String username = (String) objects[0];
+                int age = (int) objects[1];
+            }
+
+            List<MemberDTO> nameAgeDTOList = em.createQuery("select distinct new jpql.MemberDTO(m.username, m.age) from Member m", MemberDTO.class).getResultList();
+            for (MemberDTO memberDTO : nameAgeDTOList) {
+                String username = memberDTO.getUsername();
+                int age = memberDTO.getAge();
+                System.out.println("memberDTO.getUsername() = " + memberDTO.getUsername());
+                System.out.println("memberDTO.getAge() = " + memberDTO.getAge());
+            }
+
+            // 임베디드 프로젝션
+            em.createQuery("select o.address from Order o", Address.class).getResultList();
+
+            // 엔티티 프로젝션
+            // 명시적으로 join 을 해줘야 나중에 유지보수할때 편함
+            List<Team> teamsExplicitJoin = em.createQuery("select t from Member m join m.team t", Team.class).getResultList();
+            List<Team> teamsImplicitJoin = em.createQuery("select m.team from Member m", Team.class).getResultList();
+
+            // 엔티티 프로젝션
+            // entity 프로젝션으로 select 해온 엔티티들은 영속성 컨텍스트로 관리가 된다
+            List<Member> result = em.createQuery("select m from Member m", Member.class).getResultList();
+
+            Member findMember = result.get(0);
+            // 업데이트 쿼리 날아감
+            findMember.setAge(20);
 
             TypedQuery<Member> query1 = em.createQuery("select m from Member m", Member.class);
             // 값이 하나 - 결과가 정확히 하나, 결과가 없으면 NoResultException, 둘 이상 NonUniqueResultException
