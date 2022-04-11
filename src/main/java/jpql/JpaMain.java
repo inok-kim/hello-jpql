@@ -2,7 +2,6 @@ package jpql;
 
 import javax.persistence.*;
 import java.util.List;
-import java.util.Map;
 
 public class JpaMain {
 
@@ -22,22 +21,30 @@ public class JpaMain {
             member.setUsername("member1");
             member.setAge(10);
             member.setTeam(team);
+            member.setType(MemberType.ADMIN);
             em.persist(member);
 
             Member memberTeamA = new Member();
             memberTeamA.setUsername("teamA");
             memberTeamA.setAge(10);
             memberTeamA.setTeam(team);
+            memberTeamA.setType(MemberType.USER);
             em.persist(memberTeamA);
 
-            // JPA는 WHERE, HAVING 절에서만 서브 쿼리 사용 가능, FROM절 서브쿼리 안 됨!
-            String selectSubquery = "select (select avg(m1.age) from Member m1) as avgAge from Member m";
-            List<Double> result = em.createQuery(selectSubquery, Double.class)
+            String query = "select m.username, 'HELLO', TRUE from Member m" +
+                    " where m.type = :memberType";
+//                            " where m.type = jpql.MemberType.ADMIN";
+            List<Object[]> resultList = em.createQuery(query)
+                    .setParameter("memberType", MemberType.ADMIN)
                     .getResultList();
-            for (Double age : result) {
-                System.out.println(age);
+            for (Object[] o : resultList) {
+                System.out.println("o[0] = " + o[0]);
+                System.out.println("o[1] = " + o[1]);
+                System.out.println("o[2] = " + o[2]);
             }
 
+            // type으로 조회(DType)
+//            em.createQuery("select i from Item i where type(i) = Book", Item.class).getResultList();
 
             tx.commit();
 
@@ -49,6 +56,17 @@ public class JpaMain {
         }
 
         emf.close();
+    }
+
+    private void subquery() {
+
+//        // JPA는 WHERE, HAVING 절에서만 서브 쿼리 사용 가능, FROM절 서브쿼리 안 됨!
+//        String selectSubquery = "select (select avg(m1.age) from Member m1) as avgAge from Member m";
+//        List<Double> result = em.createQuery(selectSubquery, Double.class)
+//                .getResultList();
+//        for (Double age : result) {
+//            System.out.println(age);
+//        }
     }
 
     private void paging() {
