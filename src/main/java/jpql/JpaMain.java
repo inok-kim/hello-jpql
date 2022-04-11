@@ -1,11 +1,68 @@
 package jpql;
 
 import javax.persistence.*;
+import java.util.Collection;
 import java.util.List;
 
 public class JpaMain {
 
     public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team team = new Team();
+            team.setName("teamA");
+            em.persist(team);
+
+            Member member = new Member();
+            member.setUsername("member1");
+            member.setAge(10);
+            member.setTeam(team);
+            member.setType(MemberType.ADMIN);
+            em.persist(member);
+
+            Member memberTeamA = new Member();
+//            memberTeamA.setUsername("teamA");
+            memberTeamA.setAge(60);
+            memberTeamA.setTeam(team);
+            memberTeamA.setType(MemberType.USER);
+            em.persist(memberTeamA);
+
+            // 이렇게는 쓰지 않... 묵시적 조인이 아닌 명시적 조인을 쓰자
+            String query = "select t.members from Team t";
+            Collection result = em.createQuery(query, Collection.class).getResultList();
+
+            for (Object o : result) {
+                System.out.println("o = " + o);
+            }
+
+            String explicitJoin = "select m.username from Member m join m.team t";
+            List<String> explicitJoinResult = em.createQuery(explicitJoin, String.class).getResultList();
+            for (String s : explicitJoinResult) {
+                System.out.println("s = " + s);
+            }
+
+            String sizeQuery = "select t.members.size from Team t";
+            Integer sizeResult = em.createQuery(sizeQuery, Integer.class).getSingleResult();
+            System.out.println("sizeResult = " + sizeResult);
+
+            tx.commit();
+
+        } catch (Exception e) {
+            tx.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    private void myFunction() {
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
         EntityManager em = emf.createEntityManager();
 
@@ -50,6 +107,7 @@ public class JpaMain {
             for (String s : myFunctionResult) {
                 System.out.println("s = " + s);
             }
+
 
             tx.commit();
 
