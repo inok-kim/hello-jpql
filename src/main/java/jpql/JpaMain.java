@@ -30,33 +30,12 @@ public class JpaMain {
             memberTeamA.setTeam(team);
             em.persist(memberTeamA);
 
-            em.flush();
-            em.clear();
-
-            // ★  @ManyToOne(fetch = FetchType.LAZY)
-            String innerJoinQuery = "select m from Member m join m.team t";
-            // on 으로 필터
-            String leftJoinQuery = "select m from Member m left join m.team t on t.name='teamA' ";
-            // right 조인도 가능
-            String noRelationJoin = "select m from Member m right join m.team t on m.username= t.name ";
-            String thetaJoinQuery = "select m from Member m, Team t where m.username = t.name";
-            List<Member> innerJoinResult = em.createQuery(innerJoinQuery, Member.class)
+            // JPA는 WHERE, HAVING 절에서만 서브 쿼리 사용 가능, FROM절 서브쿼리 안 됨!
+            String selectSubquery = "select (select avg(m1.age) from Member m1) as avgAge from Member m";
+            List<Double> result = em.createQuery(selectSubquery, Double.class)
                     .getResultList();
-            List<Member> leftJoinResult = em.createQuery(leftJoinQuery, Member.class)
-                    .getResultList();
-            List<Member> noRelationJoinResult = em.createQuery(noRelationJoin, Member.class)
-                    .getResultList();
-            List<Member> thetaJoinResult = em.createQuery(thetaJoinQuery, Member.class)
-                    .getResultList();
-
-            for (Member m : innerJoinResult) {
-                System.out.println("inner m = " + m);
-            }
-            for (Member m : leftJoinResult) {
-                System.out.println("left m = " + m);
-            }
-            for (Member m : thetaJoinResult) {
-                System.out.println("theta m = " + m);
+            for (Double age : result) {
+                System.out.println(age);
             }
 
 
