@@ -14,6 +14,72 @@ public class JpaMain {
         tx.begin();
 
         try {
+            Team team = new Team();
+            team.setName("teamA");
+            em.persist(team);
+
+            Member member = new Member();
+            member.setUsername("member1");
+            member.setAge(10);
+            member.setTeam(team);
+            em.persist(member);
+
+            Member memberTeamA = new Member();
+            memberTeamA.setUsername("teamA");
+            memberTeamA.setAge(10);
+            memberTeamA.setTeam(team);
+            em.persist(memberTeamA);
+
+            em.flush();
+            em.clear();
+
+            // ★  @ManyToOne(fetch = FetchType.LAZY)
+            String innerJoinQuery = "select m from Member m join m.team t";
+            // on 으로 필터
+            String leftJoinQuery = "select m from Member m left join m.team t on t.name='teamA' ";
+            // right 조인도 가능
+            String noRelationJoin = "select m from Member m right join m.team t on m.username= t.name ";
+            String thetaJoinQuery = "select m from Member m, Team t where m.username = t.name";
+            List<Member> innerJoinResult = em.createQuery(innerJoinQuery, Member.class)
+                    .getResultList();
+            List<Member> leftJoinResult = em.createQuery(leftJoinQuery, Member.class)
+                    .getResultList();
+            List<Member> noRelationJoinResult = em.createQuery(noRelationJoin, Member.class)
+                    .getResultList();
+            List<Member> thetaJoinResult = em.createQuery(thetaJoinQuery, Member.class)
+                    .getResultList();
+
+            for (Member m : innerJoinResult) {
+                System.out.println("inner m = " + m);
+            }
+            for (Member m : leftJoinResult) {
+                System.out.println("left m = " + m);
+            }
+            for (Member m : thetaJoinResult) {
+                System.out.println("theta m = " + m);
+            }
+
+
+            tx.commit();
+
+        } catch (Exception e) {
+            tx.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    private void paging() {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
             for(int i=0; i<100; i++) {
                 Member member = new Member();
                 member.setUsername("member"+i);
@@ -44,7 +110,7 @@ public class JpaMain {
             em.close();
         }
 
-        emf.close();;
+        emf.close();
     }
 
     private void projection() {
