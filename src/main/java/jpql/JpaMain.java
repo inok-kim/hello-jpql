@@ -31,14 +31,72 @@ public class JpaMain {
             memberTeamA.setType(MemberType.USER);
             em.persist(memberTeamA);
 
+//            String query = "select 'a' || 'b' from Member m";
+            String query = "select concat('a','b') from Member m";
+            List<String> result = em.createQuery(query, String.class).getResultList();
+
+            for (String s : result) {
+                System.out.println("s = " + s);
+            }
+
+            String locateQuery = "select locate('1', m.username) from Member m";
+            List<Integer> locateResult = em.createQuery(locateQuery, Integer.class).getResultList();
+            for (Integer integer : locateResult) {
+                System.out.println("integer = " + integer);
+            }
+
+            String myFunctionQuery = "select function('group_concat', m.age) from Member m ";
+            List<String> myFunctionResult = em.createQuery(myFunctionQuery, String.class).getResultList();
+            for (String s : myFunctionResult) {
+                System.out.println("s = " + s);
+            }
+
+            tx.commit();
+
+        } catch (Exception e) {
+            tx.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    private void caseAndCoalesceAndNullIf() {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team team = new Team();
+            team.setName("teamA");
+            em.persist(team);
+
+            Member member = new Member();
+            member.setUsername("member1");
+            member.setAge(10);
+            member.setTeam(team);
+            member.setType(MemberType.ADMIN);
+            em.persist(member);
+
+            Member memberTeamA = new Member();
+//            memberTeamA.setUsername("teamA");
+            memberTeamA.setAge(60);
+            memberTeamA.setTeam(team);
+            memberTeamA.setType(MemberType.USER);
+            em.persist(memberTeamA);
+
             // 기본 CASE 식
             String query =
                     "select " +
-                        "case when m.age <= 10 then '학생요금' " +
-                        "     when m.age >= 60 then '경로요금' " +
-                        "     else '일반요금' " +
-                        "end "+
-                    "from Member m";
+                            "case when m.age <= 10 then '학생요금' " +
+                            "     when m.age >= 60 then '경로요금' " +
+                            "     else '일반요금' " +
+                            "end "+
+                            "from Member m";
 
             List<String> result = em.createQuery(query, String.class).getResultList();
             for (String fee : result) {
@@ -47,7 +105,7 @@ public class JpaMain {
 
             // coalesce - null 이면 두 번째 파라미터 반환, null 이 아니면 username 반환
             String coalesceQuery = "select coalesce(m.username, '이름 없는 회원') as username " +
-                                    "from Member m";
+                    "from Member m";
 
             List<String> coalesceResult = em.createQuery(coalesceQuery, String.class).getResultList();
             for (String username : coalesceResult) {
@@ -56,7 +114,7 @@ public class JpaMain {
 
             // nullif - 두 번째 파라미터와 값이 같으면 null 반환
             String nullifQuery = "select nullif(m.username, 'member1') as username " +
-                                    "from Member m";
+                    "from Member m";
             List<String> nullifResult = em.createQuery(nullifQuery, String.class).getResultList();
             for (String username : nullifResult) {
                 System.out.println("username = " + username);
