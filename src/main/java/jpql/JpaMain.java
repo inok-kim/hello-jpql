@@ -25,26 +25,42 @@ public class JpaMain {
             em.persist(member);
 
             Member memberTeamA = new Member();
-            memberTeamA.setUsername("teamA");
-            memberTeamA.setAge(10);
+//            memberTeamA.setUsername("teamA");
+            memberTeamA.setAge(60);
             memberTeamA.setTeam(team);
             memberTeamA.setType(MemberType.USER);
             em.persist(memberTeamA);
 
-            String query = "select m.username, 'HELLO', TRUE from Member m" +
-                    " where m.type = :memberType";
-//                            " where m.type = jpql.MemberType.ADMIN";
-            List<Object[]> resultList = em.createQuery(query)
-                    .setParameter("memberType", MemberType.ADMIN)
-                    .getResultList();
-            for (Object[] o : resultList) {
-                System.out.println("o[0] = " + o[0]);
-                System.out.println("o[1] = " + o[1]);
-                System.out.println("o[2] = " + o[2]);
+            // 기본 CASE 식
+            String query =
+                    "select " +
+                        "case when m.age <= 10 then '학생요금' " +
+                        "     when m.age >= 60 then '경로요금' " +
+                        "     else '일반요금' " +
+                        "end "+
+                    "from Member m";
+
+            List<String> result = em.createQuery(query, String.class).getResultList();
+            for (String fee : result) {
+                System.out.println("요금 = " + fee);
             }
 
-            // type으로 조회(DType)
-//            em.createQuery("select i from Item i where type(i) = Book", Item.class).getResultList();
+            // coalesce - null 이면 두 번째 파라미터 반환, null 이 아니면 username 반환
+            String coalesceQuery = "select coalesce(m.username, '이름 없는 회원') as username " +
+                                    "from Member m";
+
+            List<String> coalesceResult = em.createQuery(coalesceQuery, String.class).getResultList();
+            for (String username : coalesceResult) {
+                System.out.println("username = " + username);
+            }
+
+            // nullif - 두 번째 파라미터와 값이 같으면 null 반환
+            String nullifQuery = "select nullif(m.username, 'member1') as username " +
+                                    "from Member m";
+            List<String> nullifResult = em.createQuery(nullifQuery, String.class).getResultList();
+            for (String username : nullifResult) {
+                System.out.println("username = " + username);
+            }
 
             tx.commit();
 
@@ -56,6 +72,24 @@ public class JpaMain {
         }
 
         emf.close();
+    }
+
+    private void jpqlType() {
+//        String query = "select m.username, 'HELLO', TRUE from Member m" +
+//                " where m.type = :memberType";
+////                            " where m.type = jpql.MemberType.ADMIN";
+//        List<Object[]> resultList = em.createQuery(query)
+//                .setParameter("memberType", MemberType.ADMIN)
+//                .getResultList();
+//        for (Object[] o : resultList) {
+//            System.out.println("o[0] = " + o[0]);
+//            System.out.println("o[1] = " + o[1]);
+//            System.out.println("o[2] = " + o[2]);
+//        }
+//
+//        // type으로 조회(DType)
+////            em.createQuery("select i from Item i where type(i) = Book", Item.class).getResultList();
+
     }
 
     private void subquery() {
