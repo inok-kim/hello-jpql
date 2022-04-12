@@ -14,21 +14,115 @@ public class JpaMain {
         tx.begin();
 
         try {
-            Team team = new Team();
-            team.setName("teamA");
-            em.persist(team);
+            Team teamA = new Team();
+            teamA.setName("teamA");
+            em.persist(teamA);
+
+            Team teamB = new Team();
+            teamB.setName("teamB");
+            em.persist(teamB);
+
+            Member member1 = new Member();
+            member1.setUsername("member1");
+            member1.setAge(10);
+            member1.setTeam(teamA);
+            member1.setType(MemberType.ADMIN);
+            em.persist(member1);
+
+            Member member2 = new Member();
+            member2.setUsername("member2");
+            member2.setAge(10);
+            member2.setTeam(teamA);
+            member2.setType(MemberType.ADMIN);
+            em.persist(member2);
+
+            Member member3 = new Member();
+            member3.setUsername("member3");
+            member3.setAge(10);
+            member3.setTeam(teamB);
+            member3.setType(MemberType.ADMIN);
+            em.persist(member3);
+
+            em.flush();
+            em.clear();
+
+//            String query = "select m from Member m";
+            // fetch join 을 이용하면 FetchType이 Lazy 일 때 join으로 정보 가져옴 (Eager의 경우 한번에 가져오지만 n+1 문제 발생)
+            String query = "select m from Member m join fetch m.team";
+
+            List<Member> result = em.createQuery(query, Member.class).getResultList();
+            for (Member member : result) {
+                System.out.println("member = " + member.getUsername() +" , " + member.getTeam().getName());
+            }
+
+            em.flush();
+            em.clear();
+
+            // 일대다 조인 뻥튀기됨, 다대일은 괜찮음
+            String teamQuery = "select t from Team t join fetch t.members";
+            List<Team> teamList = em.createQuery(teamQuery, Team.class).getResultList();
+
+            // 팀A가 하나인데 두 row가 되버림 (멤버가 2명이니까..) 결과 나온 수 만큼 컬렉션을 만들어준다..
+            for (Team team : teamList) {
+                System.out.println("team.getName() = " + team.getName() + "|" + team.getMembers().size());
+                for ( Member member : team.getMembers()) {
+                    System.out.println(" --> member = " + member);
+                }
+            }
+
+            em.flush();
+            em.clear();
+
+            String distinctQuery = "select distinct t from Team t join fetch t.members";
+            List<Team> distinctList = em.createQuery(distinctQuery, Team.class).getResultList();
+
+            // JPQL의 DISTINCT를 사용해서 똑같은 엔티티 제거하기!
+            for (Team team : distinctList) {
+                System.out.println("distinct team.getName() = " + team.getName() + "|" + team.getMembers().size());
+                for ( Member member : team.getMembers()) {
+                    System.out.println(" --> member = " + member);
+                }
+            }
+
+            tx.commit();
+
+        } catch (Exception e) {
+            tx.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    private void joinQuery() {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team teamA = new Team();
+            teamA.setName("teamA");
+            em.persist(teamA);
+
+            Team teamB = new Team();
+            teamB.setName("teamB");
+            em.persist(teamB);
 
             Member member = new Member();
             member.setUsername("member1");
             member.setAge(10);
-            member.setTeam(team);
+            member.setTeam(teamA);
             member.setType(MemberType.ADMIN);
             em.persist(member);
 
             Member memberTeamA = new Member();
 //            memberTeamA.setUsername("teamA");
             memberTeamA.setAge(60);
-            memberTeamA.setTeam(team);
+            memberTeamA.setTeam(teamA);
             memberTeamA.setType(MemberType.USER);
             em.persist(memberTeamA);
 
