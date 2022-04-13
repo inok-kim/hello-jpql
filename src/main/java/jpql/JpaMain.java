@@ -48,23 +48,26 @@ public class JpaMain {
 
 //            String query = "select m from Member m";
             // fetch join 을 이용하면 FetchType이 Lazy 일 때 join으로 정보 가져옴 (Eager의 경우 한번에 가져오지만 n+1 문제 발생)
-            String query = "select m from Member m join fetch m.team";
-
-            List<Member> result = em.createQuery(query, Member.class).getResultList();
-            for (Member member : result) {
-                System.out.println("member = " + member.getUsername() +" , " + member.getTeam().getName());
-            }
-
-            em.flush();
-            em.clear();
+//            String query = "select m from Member m join fetch m.team";
+//
+//            List<Member> result = em.createQuery(query, Member.class).getResultList();
+//            for (Member member : result) {
+//                System.out.println("member = " + member.getUsername() +" , " + member.getTeam().getName());
+//            }
+//
+//            em.flush();
+//            em.clear();
 
             // 일대다 조인 뻥튀기됨, 다대일은 괜찮음
-            String teamQuery = "select t from Team t join fetch t.members";
-            List<Team> teamList = em.createQuery(teamQuery, Team.class).getResultList();
+            String teamQuery = "select t from Team t";
+            List<Team> teamList = em.createQuery(teamQuery, Team.class)
+                    .setFirstResult(0)
+                    .setMaxResults(2)
+                    .getResultList();
 
             // 팀A가 하나인데 두 row가 되버림 (멤버가 2명이니까..) 결과 나온 수 만큼 컬렉션을 만들어준다..
             for (Team team : teamList) {
-                System.out.println("team.getName() = " + team.getName() + "|" + team.getMembers().size());
+                System.out.println("** team.getName() = " + team.getName() + "|" + team.getMembers().size());
                 for ( Member member : team.getMembers()) {
                     System.out.println(" --> member = " + member);
                 }
@@ -73,16 +76,16 @@ public class JpaMain {
             em.flush();
             em.clear();
 
-            String distinctQuery = "select distinct t from Team t join fetch t.members";
-            List<Team> distinctList = em.createQuery(distinctQuery, Team.class).getResultList();
-
-            // JPQL의 DISTINCT를 사용해서 똑같은 엔티티 제거하기!
-            for (Team team : distinctList) {
-                System.out.println("distinct team.getName() = " + team.getName() + "|" + team.getMembers().size());
-                for ( Member member : team.getMembers()) {
-                    System.out.println(" --> member = " + member);
-                }
-            }
+//            String distinctQuery = "select distinct t from Team t join fetch t.members";
+//            List<Team> distinctList = em.createQuery(distinctQuery, Team.class).getResultList();
+//
+//            // JPQL의 DISTINCT를 사용해서 똑같은 엔티티 제거하기!
+//            for (Team team : distinctList) {
+//                System.out.println("distinct team.getName() = " + team.getName() + "|" + team.getMembers().size());
+//                for ( Member member : team.getMembers()) {
+//                    System.out.println(" --> member = " + member);
+//                }
+//            }
 
             tx.commit();
 
