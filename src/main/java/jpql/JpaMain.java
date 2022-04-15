@@ -46,6 +46,75 @@ public class JpaMain {
             em.flush();
             em.clear();
 
+            String entityQuery = "select m from Member m where m = :member";
+            Member entity = em.createQuery(entityQuery, Member.class)
+                    .setParameter("member", member1)
+                    .getSingleResult();
+
+            System.out.println("entity = " + entity);
+
+            em.flush();
+            em.clear();
+
+            String entityIdQuery = "select m from Member m where m.id = :memberId";
+            Member entityId = em.createQuery(entityIdQuery, Member.class)
+                    .setParameter("memberId", member1.getId())
+                    .getSingleResult();
+
+            System.out.println("entityId = " + entityId);
+
+            tx.commit();
+
+        } catch (Exception e) {
+            tx.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    private void fetchJoin() {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team teamA = new Team();
+            teamA.setName("teamA");
+            em.persist(teamA);
+
+            Team teamB = new Team();
+            teamB.setName("teamB");
+            em.persist(teamB);
+
+            Member member1 = new Member();
+            member1.setUsername("member1");
+            member1.setAge(10);
+            member1.setTeam(teamA);
+            member1.setType(MemberType.ADMIN);
+            em.persist(member1);
+
+            Member member2 = new Member();
+            member2.setUsername("member2");
+            member2.setAge(10);
+            member2.setTeam(teamA);
+            member2.setType(MemberType.ADMIN);
+            em.persist(member2);
+
+            Member member3 = new Member();
+            member3.setUsername("member3");
+            member3.setAge(10);
+            member3.setTeam(teamB);
+            member3.setType(MemberType.ADMIN);
+            em.persist(member3);
+
+            em.flush();
+            em.clear();
+
 //            String query = "select m from Member m";
             // fetch join 을 이용하면 FetchType이 Lazy 일 때 join으로 정보 가져옴 (Eager의 경우 한번에 가져오지만 n+1 문제 발생)
 //            String query = "select m from Member m join fetch m.team";
